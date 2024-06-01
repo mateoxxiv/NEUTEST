@@ -1,0 +1,1 @@
+/opt/homebrew/Cellar/postgresql@14/14.12/bin/postgres "-D" "/Users/newo/Mateo/PruebaTecnica/codigo/db/postgresql_data"

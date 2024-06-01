@@ -1,0 +1,11 @@
+-- iniciar el servidor
+pg_ctl -D /Users/newo/Mateo/PruebaTecnica/codigo/db/postgresql_data start
+
+-- inciar postgres
+psql -d postgres
+
+-- crear base de datos
+CREATE DATABASE datos;
+
+-- crear extención leer csv
+CREATE EXTENSION file_fdw

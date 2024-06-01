@@ -1,0 +1,72 @@
+-- Create the consumption table
+CREATE TABLE consumption (
+	id_record INTEGER PRIMARY KEY,
+	value FLOAT
+);
+
+-- Copy data into the consumption table
+COPY consumption FROM '../codigo/files/consumption.csv' WITH CSV HEADER;
+
+-- Create the injection table
+CREATE TABLE injection (
+	id_record INTEGER PRIMARY KEY,
+	value FLOAT
+);
+
+-- Copy data into the injection table
+COPY injection FROM '../codigo/files/injection.csv' WITH CSV HEADER;
+
+-- Create the xm_data_hourly_per_agent table
+CREATE TABLE xm_data_hourly_per_agent (
+	record_timestamp TIMESTAMP PRIMARY KEY,
+	value FLOAT
+);
+
+-- Copy data into the xm_data_hourly_per_agent table
+COPY xm_data_hourly_per_agent FROM '../codigo/files/xm_data_hourly_per_agent.csv' WITH CSV HEADER;
+
+-- Create the records table
+CREATE TABLE records (
+	id_record INTEGER PRIMARY KEY,
+	id_service INTEGER,
+	record_timestamp TIMESTAMP,
+	FOREIGN KEY (id_record) REFERENCES consumption (id_record),
+	FOREIGN KEY (id_record) REFERENCES injection (id_record),
+	FOREIGN KEY (record_timestamp) REFERENCES xm_data_hourly_per_agent (record_timestamp),
+	FOREIGN KEY (id_service) REFERENCES services (id_service)
+);
+
+-- Copy data into the records table
+COPY records FROM '../codigo/files/records.csv' WITH CSV HEADER;
+
+-- Create the services table
+CREATE TABLE services (
+	id_service INTEGER PRIMARY KEY,
+	id_market INTEGER,
+	cdi INTEGER,
+	voltage_level INTEGER
+);
+
+-- Copy data into the services table
+COPY services FROM '../codigo/files/services.csv' WITH CSV HEADER;
+
+-- Create the tariffs table
+CREATE TABLE tariffs (
+	id_market INTEGER,
+	voltage_level INTEGER,
+	cdi INTEGER,
+	G FLOAT,
+	T FLOAT,
+	D FLOAT,
+	R FLOAT,
+	C FLOAT,
+	P FLOAT,
+	CU FLOAT,
+	PRIMARY KEY (id_market, voltage_level, cdi),
+	FOREIGN KEY (id_market) REFERENCES services (id_market),
+	FOREIGN KEY (voltage_level) REFERENCES services (voltage_level),
+	FOREIGN KEY (cdi) REFERENCES services (cdi)
+);
+
+-- Copy data into the tariffs table
+COPY tariffs FROM '../codigo/files/tariffs.csv' WITH CSV HEADER;
