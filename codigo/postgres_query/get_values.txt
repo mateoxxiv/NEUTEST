@@ -1,5 +1,5 @@
 WITH servicio AS (
-    SELECT 3222 AS service
+    SELECT 2256 AS service
 ),
 registros AS (
     SELECT
@@ -13,28 +13,38 @@ registros AS (
     WHERE services.id_service = (SELECT service FROM servicio)
 ),
 records_ee2 AS (
-	SELECT
-		CASE
-			WHEN total_injection <= (SELECT ea FROM registros) THEN 0
-			WHEN total_injection > (SELECT ea FROM registros) AND LAG(total_injection, 1) OVER (ORDER BY q2.record_timestamp) <= (SELECT ea FROM registros) THEN (total_injection - (SELECT ea FROM registros)) * hour_value
-			ELSE daily_injection * hour_value
-		END AS ee2
-	FROM(
     SELECT
-        q1.record_timestamp,
-        q1.daily_injection,
-		q1.hour_value,
-        SUM(q1.daily_injection) OVER(ORDER BY q1.record_timestamp) AS total_injection
+        CASE
+            WHEN total_injection <= (SELECT ea FROM registros) THEN 0
+            WHEN total_injection > (SELECT ea FROM registros) AND LAG(total_injection, 1) OVER (ORDER BY q2.record_timestamp) <= (SELECT ea FROM registros) THEN (total_injection - (SELECT ea FROM registros)) * hour_value
+            ELSE daily_injection * hour_value
+        END AS ee2
     FROM (
         SELECT
-            records.record_timestamp,
-			MIN(xm_data_hourly_per_agent.value) AS hour_value,
-            SUM(injection.value) AS daily_injection
-        FROM records
-        LEFT JOIN injection ON records.id_record = injection.id_record
-		LEFT JOIN xm_data_hourly_per_agent ON xm_data_hourly_per_agent.record_timestamp = records.record_timestamp
-        GROUP BY records.record_timestamp
-    ) q1)q2
+            q1.record_timestamp,
+            q1.daily_injection,
+            q1.hour_value,
+            SUM(q1.daily_injection) OVER(ORDER BY q1.record_timestamp) AS total_injection
+        FROM (
+            SELECT
+                records.record_timestamp,
+                MIN(xm_data_hourly_per_agent.value) AS hour_value,
+                SUM(injection.value) AS daily_injection
+            FROM records
+            LEFT JOIN injection ON records.id_record = injection.id_record
+            LEFT JOIN xm_data_hourly_per_agent ON xm_data_hourly_per_agent.record_timestamp = records.record_timestamp
+            GROUP BY records.record_timestamp
+        ) q1
+    ) q2
+),
+tarifa2_3 AS (
+    SELECT
+        tariffs.CU,
+        tariffs.C
+    FROM servicio
+    LEFT JOIN services ON services.id_service = servicio.service
+    LEFT JOIN tariffs ON tariffs.id_market = CAST(services.id_market AS integer)
+        AND (tariffs.voltage_level = services.voltage_level OR tariffs.voltage_level IS NULL)
 ),
 tarifa AS (
     SELECT
@@ -43,12 +53,23 @@ tarifa AS (
     FROM servicio
     LEFT JOIN services ON services.id_service = servicio.service
     LEFT JOIN tariffs ON tariffs.id_market = CAST(services.id_market AS integer)
-        --AND tariffs.cdi = services.cdi
+        AND tariffs.cdi = services.cdi
         AND (tariffs.voltage_level = services.voltage_level OR tariffs.voltage_level IS NULL)
 )
 
 SELECT
-    (SELECT ea FROM registros) * (SELECT CU FROM tarifa) AS EA,
-    (SELECT ec FROM registros) * (SELECT C FROM tarifa) AS AC,
-    (SELECT ee1 FROM registros) * -(SELECT CU FROM tarifa) AS EE1,
-	(SELECT SUM (-ee2) FROM records_ee2) AS EE2
+    CASE
+        WHEN services.id_service = 2 OR services.id_service = 3 THEN (SELECT ea FROM registros) * (SELECT CU FROM tarifa2_3)
+        ELSE (SELECT ea FROM registros) * (SELECT CU FROM tarifa)
+    END AS EA1,
+    CASE
+        WHEN services.id_service = 2 OR services.id_service = 3 THEN (SELECT ec FROM registros) * (SELECT C FROM tarifa2_3)
+        ELSE (SELECT ec FROM registros) * (SELECT C FROM tarifa)
+    END AS EA2,
+    CASE
+        WHEN services.id_service = 2 OR services.id_service = 3 THEN (SELECT ee1 FROM registros) * -(SELECT CU FROM tarifa2_3)
+        ELSE (SELECT ee1 FROM registros) * -(SELECT CU FROM tarifa)
+    END AS EA3,
+    (SELECT SUM(-ee2) FROM records_ee2) AS EE2
+FROM services
+WHERE services.id_service = (SELECT service FROM servicio)
