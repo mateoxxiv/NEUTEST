@@ -1,5 +1,5 @@
 WITH servicio AS (
-    SELECT 2256 AS service
+    SELECT 3222 AS service
 ),
 registros AS (
     SELECT
@@ -59,15 +59,15 @@ tarifa AS (
 
 SELECT
     CASE
-        WHEN services.id_service = 2 OR services.id_service = 3 THEN (SELECT ea FROM registros) * (SELECT CU FROM tarifa2_3)
+        WHEN services.voltage_level = 2 OR services.voltage_level = 3 THEN (SELECT ea FROM registros) * (SELECT CU FROM tarifa2_3)
         ELSE (SELECT ea FROM registros) * (SELECT CU FROM tarifa)
     END AS EA1,
     CASE
-        WHEN services.id_service = 2 OR services.id_service = 3 THEN (SELECT ec FROM registros) * (SELECT C FROM tarifa2_3)
+        WHEN services.voltage_level = 2 OR services.voltage_level = 3 THEN (SELECT ec FROM registros) * (SELECT C FROM tarifa2_3)
         ELSE (SELECT ec FROM registros) * (SELECT C FROM tarifa)
     END AS EA2,
     CASE
-        WHEN services.id_service = 2 OR services.id_service = 3 THEN (SELECT ee1 FROM registros) * -(SELECT CU FROM tarifa2_3)
+        WHEN services.voltage_level = 2 OR services.voltage_level = 3 THEN (SELECT ee1 FROM registros) * -(SELECT CU FROM tarifa2_3)
         ELSE (SELECT ee1 FROM registros) * -(SELECT CU FROM tarifa)
     END AS EA3,
     (SELECT SUM(-ee2) FROM records_ee2) AS EE2
