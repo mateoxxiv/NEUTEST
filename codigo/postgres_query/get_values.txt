@@ -43,7 +43,7 @@ tarifa AS (
     FROM servicio
     LEFT JOIN services ON services.id_service = servicio.service
     LEFT JOIN tariffs ON tariffs.id_market = CAST(services.id_market AS integer)
-        AND tariffs.cdi = services.cdi
+        --AND tariffs.cdi = services.cdi
         AND (tariffs.voltage_level = services.voltage_level OR tariffs.voltage_level IS NULL)
 )
 
